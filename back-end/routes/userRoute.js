@@ -1,7 +1,8 @@
 const router = require('express').Router();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const User = require('../models/userModel');
 const jwt = require("jsonwebtoken");
+const authMiddleware = require('../middlewares/authMiddleware');
 
 
 //new user register
@@ -50,7 +51,12 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         // check if user exists
+        console.log(req.body);
+        const { email, password } = req.body;
+        console.log('Email:', email, 'password:', password);
+
         const user = await User.findOne({ email: req.body.email });
+       
         if (!user) {
             return res.send({
                 success: false,
@@ -66,11 +72,12 @@ router.post('/login', async (req, res) => {
                 message: "Invalid password",
             });
         }
+        
 
         // Gen token
         const token = jwt.sign(
             { userId: user._id },
-            process.env.jwt_secret,
+            process.env.jwt_sceret,
             { expiresIn: "1d" }
         );
         return res.send({
@@ -85,6 +92,59 @@ router.post('/login', async (req, res) => {
         });
     }
 });
+
+
+//get current user
+router.get("/get-current-user", authMiddleware, async (req, res)=>{
+    try {
+        const user = await User.findOne({ _id: req.body.userId});
+     
+        return res.send({
+            success:true,
+            message: "User fetched successfully",
+            data: user,
+        });
+
+    } catch (error) {
+        return res.send({
+            success: false,
+            message: error.message,
+
+        });
+    }
+}); 
+
+// router.get("/get-current-user", authMiddleware, async (req, res) => {
+//     try {
+//       if (!req.session.token) {
+//         return res.send({
+//           success: false,
+//           message: "User needs to log in",
+//         });
+//       }
+  
+//       const user = await User.findOne({ _id: req.body.userId });
+  
+//       return res.send({
+//         success: true,
+//         message: "User fetched successfully",
+//         data: user,
+//       });
+//     } catch (error) {
+        
+//       return res.send({
+//         success: false,
+        
+//         message: error.message,
+//       });
+//     }
+//   });
+
+
+
+
+
+
 
 
 module.exports = router;
