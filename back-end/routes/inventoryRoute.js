@@ -65,7 +65,7 @@ router.post("/add", authMiddleware, async (req, res) => {
 
             const availableQuantityOfRequestedGroup = totalIn - totalOut;
             if (availableQuantityOfRequestedGroup < requestedQuantity) {
-                throw new Error( `only ${availableQuantityOfRequestedGroup} units of ${requestedGroup.toUpperCase()} is available` );
+                throw new Error(`only ${availableQuantityOfRequestedGroup} units of ${requestedGroup.toUpperCase()} is available`);
             };
 
 
@@ -91,7 +91,7 @@ router.post("/add", authMiddleware, async (req, res) => {
             success: false,
             message: error.message,
 
-        }) 
+        })
     }
 });
 
@@ -100,8 +100,9 @@ router.post("/add", authMiddleware, async (req, res) => {
 
 router.get("/get", authMiddleware, async (req, res) => {
     try {
-        
-        const inventory = await Inventory.find({ organization: req.body.userId }).sort({createdAt: -1})
+
+        const inventory = await Inventory.find({ organization: req.body.userId })
+            .sort({ createdAt: -1 })
             .populate("donar")
             .populate("hospital");
         return res.send({ success: true, data: inventory });
@@ -114,11 +115,11 @@ router.get("/get", authMiddleware, async (req, res) => {
     }
 });
 
-
+// filter Inventory
 router.post("/filter", authMiddleware, async (req, res) => {
     try {
         console.log(req.body.filters)
-        const inventory = await Inventory.find(req.body.filters).sort({createdAt: -1})
+        const inventory = await Inventory.find(req.body.filters).limit(req.body.limit || 10).sort({ createdAt: -1 })
             .populate("donar")
             .populate("hospital").populate("organization");
         return res.send({ success: true, data: inventory });
