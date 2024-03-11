@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/userModel');
 const jwt = require("jsonwebtoken");
 const authMiddleware = require('../middlewares/authMiddleware');
+const { default: mongoose } = require('mongoose');
+const Inventory = require("../models/inventoryModel");
 
 
 //new user register
@@ -56,13 +58,23 @@ router.post('/login', async (req, res) => {
         console.log('Email:', email, 'password:', password);
 
         const user = await User.findOne({ email: req.body.email });
-       
+
         if (!user) {
             return res.send({
                 success: false,
                 message: "User not found",
             });
         }
+
+        // user type matching as donar, org and hospital
+        if (user.userType !== req.body.userType) {
+            return res.send({
+                success: false,
+                message: `user is not registered as a ${req.body.userType}`,
+            });
+        }
+
+
 
         // Compare passwords
         const validPassword = await bcrypt.compare(req.body.password, user.password);
@@ -72,7 +84,7 @@ router.post('/login', async (req, res) => {
                 message: "Invalid password",
             });
         }
-        
+
 
         // Gen token
         const token = jwt.sign(
@@ -93,14 +105,14 @@ router.post('/login', async (req, res) => {
     }
 });
 
-
+// ORGANIZATION LOGIN *******************************************
 //get current user
-router.get("/get-current-user", authMiddleware, async (req, res)=>{
+router.get("/get-current-user", authMiddleware, async (req, res) => {
     try {
-        const user = await User.findOne({ _id: req.body.userId});
-     
+        const user = await User.findOne({ _id: req.body.userId });
+
         return res.send({
-            success:true,
+            success: true,
             message: "User fetched successfully",
             data: user,
         });
@@ -112,37 +124,126 @@ router.get("/get-current-user", authMiddleware, async (req, res)=>{
 
         });
     }
-}); 
-
-// router.get("/get-current-user", authMiddleware, async (req, res) => {
-//     try {
-//       if (!req.session.token) {
-//         return res.send({
-//           success: false,
-//           message: "User needs to log in",
-//         });
-//       }
-  
-//       const user = await User.findOne({ _id: req.body.userId });
-  
-//       return res.send({
-//         success: true,
-//         message: "User fetched successfully",
-//         data: user,
-//       });
-//     } catch (error) {
-        
-//       return res.send({
-//         success: false,
-        
-//         message: error.message,
-//       });
-//     }
-//   });
+});
 
 
+//get all donars
+
+router.get("/get-all-donars", authMiddleware, async (req, res) => {
+    try {
+        const organization = new mongoose.Types.ObjectId(req.body.userId);
+        const uniqueDonarsIds = await Inventory.distinct("donar", {
+            organization,
+        });
+
+        const donars = await User.find({
+            _id: { $in: uniqueDonarsIds },
+        });
+        return res.send({
+            success: true,
+            message: "donars fetched successfully",
+            data: donars,
+        });
+
+    } catch (error) {
+        return res.send({
+            success: false,
+            message: error.message,
+        });
+
+    }
+});
 
 
+//get unique hospitals
+router.get("/get-all-hospitals", authMiddleware, async (req, res) => {
+    try {
+        const organization = new mongoose.Types.ObjectId(req.body.userId);
+        const uniqueHospitals = await Inventory.distinct("hospital", {
+            organization,
+        });
+        const hospitals = await User.find({
+            _id: { $in: uniqueHospitals },
+           
+        });
+        return res.send({
+            success: true,
+            messsage: "Hospitals fetched successfully",
+            data: hospitals,
+        });
+
+
+    } catch (error) {
+        return res.send({
+            success: false,
+            message: error.message,
+        });
+
+    }
+});
+
+
+
+
+
+
+//DONAR LOGIN *******************************************
+//get all unique organization of donar
+router.get("/get-all-organization-of-donar", authMiddleware, async (req, res) => {
+    try {
+        const donar = new mongoose.Types.ObjectId(req.body.userId);
+        const uniqueOrganizationIds = await Inventory.distinct("organization", {
+            donar,
+        });
+        const hospitals = await User.find({
+            _id: { $in: uniqueOrganizationIds },
+           
+        });
+        return res.send({
+            success: true,
+            messsage: "hospitals fetched successfully",
+            data: hospitals,
+        });
+
+
+    } catch (error) {
+        return res.send({
+            success: false,
+            message: error.message,
+        });
+
+    }
+});
+
+
+//Hospital Login
+// get all unique hospitals
+router.get("/get-all-organization-of-hospital", authMiddleware, async (req, res) => {
+    try {
+        const hospital = new mongoose.Types.ObjectId(req.body.userId);
+        const uniqueOrganizationIds = await Inventory.distinct("organization", {
+            hospital,
+        });
+        const hospitals = await User.find({
+            _id: { $in: uniqueOrganizationIds },
+           
+        });
+        //console.log(hospitals)
+        return res.send({
+            success: true,
+            messsage: "Hospitals fetched successfully",
+            data: hospitals,
+        });
+
+
+    } catch (error) {
+        return res.send({
+            success: false,
+            message: error.message,
+        });
+
+    }
+});
 
 
 

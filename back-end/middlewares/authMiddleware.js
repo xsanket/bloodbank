@@ -11,6 +11,7 @@ module.exports = function(req, res, next){
         next();
         
     } catch (error) {
+        navigate("/login");
         console.log("error ahe bro");
         return res.send({
             success:false,

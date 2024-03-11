@@ -6,8 +6,17 @@ const dbConfig = require('./config/dbConfig');
 app.use(express.json());
 
 const usersRoute = require('./routes/userRoute');
+const inventoryRoute = require("./routes/inventoryRoute")
+const dashboardRoute = require(`./routes/dashboardRoute`)
 
+//users
 app.use('/api/users', usersRoute);
+
+//inventory
+app.use('/api/inventory', inventoryRoute);
+
+//dashboard
+app.use(`/api/dashboard`, dashboardRoute);
 
 
 
@@ -21,3 +30,5 @@ app.use('/api/users', usersRoute);
 app.listen(port, ()=>{
     console.log(`server is runnig at ${port}`)
 })
+
+
