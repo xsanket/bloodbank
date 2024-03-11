@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+
+//user data like entity
 const userSchema = new mongoose.Schema({
     userType: {
         type: String,
@@ -71,9 +73,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         requird: true
     },
-
-
-
 
 },
     {
